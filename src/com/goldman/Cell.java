@@ -11,7 +11,7 @@ public class Cell {
 	public static final int COLOR_COUNT = 7;
 
 	public static final int CELL_SIZE = 100;
-	public static final int CELL_SPEED = 10;
+	public static final int CELL_SPEED = 20;
 
 	private int color;
 	private int bonus;
@@ -81,26 +81,42 @@ public class Cell {
 		return empty;
 	}
 
+	public int getX() {
+		return x;
+	}
+
+	public int getY() {
+		return y;
+	}
+
+	public int getTargetX() {
+		return targetX;
+	}
+
+	public int getTargetY() {
+		return targetY;
+	}
+
 	public boolean update() {
-		boolean moved = false;
+		boolean animFinished = true;
 
 		if (x > targetX) {
 			x = Math.max(targetX, x - CELL_SPEED);
-			moved = true;
+			animFinished = false;
 		}
 		if (x < targetX) {
 			x = Math.min(targetX, x + CELL_SPEED);
-			moved = true;
+			animFinished = false;
 		}
 		if (y > targetY) {
 			y = Math.max(targetY, y - CELL_SPEED);
-			moved = true;
+			animFinished = false;
 		}
 		if (y < targetY) {
 			y = Math.min(targetY, y + CELL_SPEED);
-			moved = true;
+			animFinished = false;
 		}
 
-		return moved;
+		return animFinished;
 	}
 }

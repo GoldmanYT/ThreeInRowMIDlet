@@ -18,6 +18,8 @@ public class ThreeInRow {
 	private static int nextCol;
 	private static int state;
 	private static int score;
+	private static boolean debugAnimFinised;
+	private static int[] debugCellInfo = new int[8];
 
 	ThreeInRow() {
 		field = new Cell[8][8];
@@ -72,14 +74,33 @@ public class ThreeInRow {
 	}
 
 	public static void update() {
+		if (selectedRow != -1 && selectedCol != -1) {
+			Cell cell = field[selectedRow][selectedCol];
+			debugCellInfo[0] = cell.getX();
+			debugCellInfo[1] = cell.getY();
+			debugCellInfo[2] = cell.getTargetX();
+			debugCellInfo[3] = cell.getTargetY();
+		}
+		if (nextRow != -1 && nextCol != -1) {
+			Cell cell = field[nextRow][nextCol];
+			debugCellInfo[4] = cell.getX();
+			debugCellInfo[5] = cell.getY();
+			debugCellInfo[6] = cell.getTargetX();
+			debugCellInfo[7] = cell.getTargetY();
+		}
+
 		boolean animFinished = true;
 
 		for (int row = 0; row < field.length; row++) {
 			for (int col = 0; col < field[row].length; col++) {
 				Cell cell = field[row][col];
-				animFinished &= !cell.update();
+				if (!cell.update()) {
+					animFinished = false;
+				}
 			}
 		}
+
+		debugAnimFinised = animFinished;
 
 		switch (state) {
 		case ANIM_FIRST_MOVE:
@@ -162,7 +183,9 @@ public class ThreeInRow {
 	public static String[] getDebugInfo() {
 		String[] colors = new String[] { "Y", "W", "B", "R", "P", "O", "G" };
 		String[] types = new String[] { "O", "|", "—", "6", "@" };
-		String[] res = new String[10];
+		String[] states = new String[] { "WAIT_INPUT", "ANIM_FIRST_MOVE", "CHECK_MOVE_CORRECT", "ANIM_UNDO_MOVE",
+				"ANIM_DESTROY_AND_FALL", "CHECK_LINES" };
+		String[] res = new String[20];
 
 		for (int row = 0; row < field.length; row++) {
 			res[row] = "";
@@ -175,7 +198,16 @@ public class ThreeInRow {
 				}
 			}
 		}
-		res[8] = "State: " + state;
+		res[field.length] = "State: " + states[state];
+		res[field.length + 1] = "animFinished: " + debugAnimFinised;
+		res[field.length + 2] = "selected: ";
+		for (int i = 0; i < 4; i++) {
+			res[field.length + 2] += debugCellInfo[i] + " ";
+		}
+		res[field.length + 3] = "next: ";
+		for (int i = 4; i < 8; i++) {
+			res[field.length + 3] += debugCellInfo[i] + " ";
+		}
 
 		return res;
 	}
@@ -200,8 +232,8 @@ public class ThreeInRow {
 		field[selectedRow][selectedCol] = field[nextRow][nextCol];
 		field[nextRow][nextCol] = tmpCell;
 
-		field[selectedRow][selectedCol].setTarget(nextRow, nextCol);
-		field[nextRow][nextCol].setTarget(selectedRow, selectedCol);
+		field[selectedRow][selectedCol].setTarget(selectedRow, selectedCol);
+		field[nextRow][nextCol].setTarget(nextRow, nextCol);
 
 		int tmpInt = selectedRow;
 		selectedRow = nextRow;
