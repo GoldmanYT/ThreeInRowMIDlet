@@ -1,0 +1,8 @@
+MIDlet-1: ThreeInRow, ThreeInRow.png, com.goldman.ThreeInRowMIDlet
+MIDlet-Jar-Size: 130381
+MIDlet-Jar-URL: ThreeInRow.jar
+MIDlet-Name: ThreeInRow
+MIDlet-Vendor: Unknown
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0
