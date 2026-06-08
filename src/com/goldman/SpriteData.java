@@ -4,11 +4,10 @@ public class SpriteData {
 	public static final SpriteData[] DATA = new SpriteData[] {
 			new SpriteData("/checktextures.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 10, 1),
 			new SpriteData("/gemsheet.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 8, 7),
-			new SpriteData("/target.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 7, 1),
+			new SpriteData("/target.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 11, 1),
 			new SpriteData("/flame.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 8, 1),
 			new SpriteData("/elect.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 8, 1),
-			// TODO: Fix hypercube texture
-			new SpriteData("/hypercube.png", 57, 60, 10, 6), };
+			new SpriteData("/hypercube.png", ThreeInRowCanvas.CELL_SIZE, ThreeInRowCanvas.CELL_SIZE, 10, 6), };
 
 	public final String imagePath;
 	public final int spriteWidth;

@@ -9,6 +9,7 @@ public class Cell {
 	public static final int ORANGE = 5;
 	public static final int GREEN = 6;
 	public static final int COLOR_COUNT = 7;
+	public static final int NONE = 8;
 
 	public static final int CELL_SIZE = 100;
 	public static final int CELL_SPEED = 20;
@@ -25,11 +26,22 @@ public class Cell {
 	private int targetY;
 	private int destroyProgress;
 
-	Cell(int color, int bonus, int row, int col) {
+	Cell(int color, int row, int col) {
 		setColor(color);
-		setBonus(bonus);
+		setBonus(Bonus.NONE);
 		setPos(row, col);
 		setTarget(row, col);
+		empty = false;
+		destroyProgress = 0;
+	}
+
+	Cell(int color, Cell cell) {
+		setColor(color);
+		setBonus(Bonus.NONE);
+		setX(cell.getX());
+		setY(cell.getY());
+		setTargetX(cell.getTargetX());
+		setTargetY(cell.getTargetY());
 		empty = false;
 		destroyProgress = 0;
 	}
@@ -49,9 +61,6 @@ public class Cell {
 	}
 
 	public void setColor(int color) {
-		if (color < 0 || color >= COLOR_COUNT)
-			return;
-
 		this.color = color;
 	}
 
@@ -64,6 +73,22 @@ public class Cell {
 
 	public void setEmpty(boolean empty) {
 		this.empty = empty;
+	}
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public void setY(int y) {
+		this.y = y;
+	}
+
+	public void setTargetX(int targetX) {
+		this.targetX = targetX;
+	}
+
+	public void setTargetY(int targetY) {
+		this.targetY = targetY;
 	}
 
 	public int getColor() {

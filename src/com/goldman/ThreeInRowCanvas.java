@@ -25,6 +25,7 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 	private Sprite[] sprites;
 	private boolean running = true;
 	private boolean debug = false;
+	private int frame = 0;
 
 	ThreeInRowCanvas() {
 		new ThreeInRow();
@@ -202,14 +203,17 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 	}
 
 	private void update() {
-		// TODO: fix animation speeds
+		frame = (frame + 1) % 60;
 		sprites[TARGET].nextFrame();
-		sprites[FLAME].nextFrame();
-		sprites[ELECT].nextFrame();
+		if (frame % 2 == 0) {
+			sprites[FLAME].nextFrame();
+			sprites[ELECT].nextFrame();
+		}
 		sprites[HYPERCUBE].nextFrame();
 	}
 
 	protected void pointerPressed(int x, int y) {
+		ThreeInRow.resetCursor();
 		int row = (y - OFFSET_Y) / CELL_SIZE;
 		int col = (x - OFFSET_X) / CELL_SIZE;
 		ThreeInRow.select(row, col);

@@ -212,6 +212,39 @@ public class ThreeInRow {
 		}
 	}
 
+	public static int[] getHint() {
+		for (int i = 0; i < MoveData.DATA.length; i++) {
+			MoveData moveData = MoveData.DATA[i];
+			byte[][] template = moveData.template;
+			for (int row = 0; row < field.length; row++) {
+				for (int col = 0; col < field[row].length; col++) {
+					if (row + template.length - 1 < field.length && col + template[0].length - 1 < field[0].length) {
+						boolean isMoveCorrect = true;
+						int color = -1;
+
+						for (int dRow = 0; dRow < template.length; dRow++) {
+							for (int dCol = 0; dCol < template[dRow].length; dCol++) {
+								Cell cell = field[row + dRow][col + dCol];
+
+								if (template[dRow][dCol] == 1 && color == -1) {
+									color = cell.getColor();
+								} else if (template[dRow][dCol] == 1 && color != cell.getColor()) {
+									isMoveCorrect = false;
+								}
+							}
+						}
+
+						if (isMoveCorrect) {
+							return new int[] { row + moveData.row, col + moveData.col };
+						}
+					}
+				}
+			}
+		}
+
+		return new int[] { -1, -1 };
+	}
+
 	public static int getState() {
 		return state;
 	}
@@ -246,6 +279,15 @@ public class ThreeInRow {
 
 	public static boolean isSelected() {
 		return selectedRow != -1 && selectedCol != -1;
+	}
+
+	public static boolean isNextSelected() {
+		return nextRow != -1 && nextCol != -1;
+	}
+
+	public static void resetCursor() {
+		cursorRow = -1;
+		cursorCol = -1;
 	}
 
 	public static String getDebugField() {
@@ -345,6 +387,19 @@ public class ThreeInRow {
 		boolean destroyNeeded = false;
 		boolean formedBonuses[][] = new boolean[field.length][field[0].length];
 
+		if (isSelected() && isNextSelected()) {
+			if (field[selectedRow][selectedCol].getBonus() == Bonus.HYPERCUBE) {
+				activateBonus(selectedRow, selectedCol);
+				field[selectedRow][selectedCol].setEmpty(true);
+				destroyNeeded = true;
+			}
+			if (field[nextRow][nextCol].getBonus() == Bonus.HYPERCUBE) {
+				activateBonus(nextRow, nextCol);
+				field[nextRow][nextCol].setEmpty(true);
+				destroyNeeded = true;
+			}
+		}
+
 		for (int i = 0; i < Bonus.DATA.length; i++) {
 			Bonus bonus = Bonus.DATA[i];
 			for (int row = 0; row < field.length; row++) {
@@ -360,7 +415,8 @@ public class ThreeInRow {
 								if (bonus.template[dRow][dCol] == 1 && color == -1) {
 									color = field[row + dRow][col + dCol].getColor();
 								} else if (bonus.template[dRow][dCol] == 1
-										&& field[row + dRow][col + dCol].getColor() != color) {
+										&& (field[row + dRow][col + dCol].getColor() != color
+												|| field[row + dRow][col + dCol].getColor() == Cell.NONE)) {
 									lineMatch = false;
 								}
 								if (bonus.template[dRow][dCol] == 1 && field[row + dRow][col + dCol].isEmpty()) {
@@ -392,6 +448,10 @@ public class ThreeInRow {
 										cell.setEmpty(false);
 										cell.setBonus(bonus.type);
 										formedBonuses[row + dRow][col + dCol] = true;
+
+										if (bonus.type == Bonus.HYPERCUBE) {
+											cell.setColor(Cell.NONE);
+										}
 									}
 								}
 							}
@@ -447,31 +507,32 @@ public class ThreeInRow {
 			}
 			break;
 		case Bonus.HYPERCUBE:
-			// TODO: implement hypercube bonus
-			// if (isSelected()) {
-			// if (selectedRow == row && selectedCol == col) {
-			// int color;
-			// if (0 <= nextRow && nextRow < field.length && 0 <= nextRow &&
-			// nextRow < field.length) {
-			// color = field[nextRow][nextCol].getColor();
-			// } else {
-			// color = -1;
-			// }
-			// for (int dRow = 0; dRow < field.length; dRow++) {
-			// for (int dCol = 0; dCol < field[dRow].length; dCol++) {
-			// if (field[dRow][dCol].getColor() == color || color != -1 && row
-			// == dRow && col == dCol) {
-			// field[dRow][dCol].setEmpty(true);
-			// }
-			// }
-			// }
-			// }
-			// }
+			int color;
+			if (isSelected() && isNextSelected()) {
+				if (row == selectedRow && col == selectedCol) {
+					color = field[nextRow][nextCol].getColor();
+				} else if (row == nextRow && col == nextCol) {
+					color = field[selectedRow][selectedCol].getColor();
+				} else {
+					color = getRandomColor();
+				}
+			} else {
+				color = getRandomColor();
+			}
+			for (int dRow = 0; dRow < field.length; dRow++) {
+				for (int dCol = 0; dCol < field[dRow].length; dCol++) {
+					if (field[dRow][dCol].getColor() == color && color < Cell.COLOR_COUNT) {
+						field[dRow][dCol].setEmpty(true);
+					}
+				}
+			}
 			break;
 		}
 	}
 
 	private static void destroyAndFall() {
+		boolean[][] newCells = new boolean[field.length][field[0].length];
+
 		for (int col = 0; col < field[0].length; col++) {
 			int deltaRow = 0;
 			for (int row = field.length - 1; row >= 0; row--) {
@@ -482,16 +543,43 @@ public class ThreeInRow {
 					field[row][col] = field[row + deltaRow][col];
 				} else {
 					field[row][col] = getRandomCell(row, col);
+					newCells[row][col] = true;
 				}
 				field[row][col].setTarget(row, col);
 				field[row][col].setDeltaRow(deltaRow);
 			}
 		}
+
+		boolean hasMoves = checkMoves();
+
+		while (!hasMoves) {
+			for (int row = 0; row < field.length; row++) {
+				for (int col = 0; col < field[row].length; col++) {
+					if (newCells[row][col]) {
+						field[row][col] = getRandomCell(field[row][col]);
+					}
+				}
+			}
+			hasMoves = checkMoves();
+		}
+	}
+
+	private static boolean checkMoves() {
+		int[] hint = getHint();
+		return hint[0] != -1 && hint[1] != -1;
 	}
 
 	private static Cell getRandomCell(int row, int col) {
-		int color = (random.nextInt() % Cell.COLOR_COUNT + Cell.COLOR_COUNT) % Cell.COLOR_COUNT;
-		int bonus = Bonus.NONE;
-		return new Cell(color, bonus, row, col);
+		int color = getRandomColor();
+		return new Cell(color, row, col);
+	}
+
+	private static Cell getRandomCell(Cell cell) {
+		int color = getRandomColor();
+		return new Cell(color, cell);
+	}
+
+	private static int getRandomColor() {
+		return (random.nextInt() % Cell.COLOR_COUNT + Cell.COLOR_COUNT) % Cell.COLOR_COUNT;
 	}
 }
