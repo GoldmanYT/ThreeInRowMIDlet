@@ -7,21 +7,20 @@ import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.Sprite;
 
 public class ThreeInRowCanvas extends Canvas implements Runnable {
-	private static final int CHECK = 0;
-	private static final int GEM = 1;
-	private static final int TARGET = 2;
+	public static final int CHECK = 0;
+	public static final int GEM = 1;
+	public static final int TARGET = 2;
+	public static final int FLAME = 3;
+	public static final int ELECT = 4;
+	public static final int HYPERCUBE = 5;
 
-	private static final int OFFSET_X = 0;
-	private static final int OFFSET_Y = 0;
-	private static final int WIDTH = 240;
-	private static final int HEIGHT = 320;
+	public static final int OFFSET_X = 0;
+	public static final int OFFSET_Y = 0;
+	public static final int WIDTH = 240;
+	public static final int HEIGHT = 320;
 
-	private static final int CELL_SIZE = 30;
-	private static final int ANIM_DELAY = 30;
-
-	private static final String[] imagePaths = new String[] { "/checktextures.png", "/gemsheet.png", "/target.png", };
-	private static final int[][] sizes = new int[][] { { CELL_SIZE * 30, CELL_SIZE, 30, 1 },
-			{ CELL_SIZE * 15, CELL_SIZE * 14, 15, 14 }, { CELL_SIZE * 6, CELL_SIZE, 6, 1 } };
+	public static final int CELL_SIZE = 30;
+	public static final int ANIM_DELAY = 30;
 
 	private Sprite[] sprites;
 	private boolean running = true;
@@ -30,23 +29,23 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 	ThreeInRowCanvas() {
 		new ThreeInRow();
 
-		sprites = new Sprite[imagePaths.length];
-		for (int i = 0; i < imagePaths.length; i++) {
-			Image spriteSheet;
+		sprites = new Sprite[SpriteData.DATA.length];
+		for (int i = 0; i < SpriteData.DATA.length; i++) {
+			SpriteData spriteData = SpriteData.DATA[i];
+			Image spriteSheet = null;
 			try {
-				spriteSheet = Image.createImage(imagePaths[i]);
+				spriteSheet = Image.createImage(spriteData.imagePath);
+				if (spriteSheet.getWidth() % spriteData.spriteWidth != 0
+						|| spriteSheet.getHeight() % spriteData.spriteHeight != 0) {
+					System.err.println("Sprite sizes are incorrect");
+					System.err.println("Spritesheet size: " + spriteSheet.getWidth() + " " + spriteSheet.getHeight());
+					System.err.println("Sprite size: " + spriteData.spriteWidth + " " + spriteData.spriteHeight);
+					throw new Exception();
+				}
 			} catch (Exception e) {
 				spriteSheet = getDefaultImage(i);
 			}
-
-			int width = sizes[i][0];
-			int height = sizes[i][1];
-			int horizontalCount = sizes[i][2];
-			int verticalCount = sizes[i][3];
-			int spriteWidth = width / horizontalCount;
-			int spriteHeight = height / verticalCount;
-
-			sprites[i] = new Sprite(spriteSheet, spriteWidth, spriteHeight);
+			sprites[i] = new Sprite(spriteSheet, spriteData.spriteWidth, spriteData.spriteHeight);
 		}
 
 		setFullScreenMode(true);
@@ -54,37 +53,64 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 	}
 
 	private Image getDefaultImage(int imageIndex) {
-		Image result = Image.createImage(sizes[imageIndex][0], sizes[imageIndex][1]);
+		SpriteData spriteData = SpriteData.DATA[imageIndex];
+
+		int spriteWidth = spriteData.spriteWidth;
+		int spriteHeight = spriteData.spriteHeight;
+		int width = spriteData.width;
+		int height = spriteData.height;
+
+		Image result = Image.createImage(width, height);
 		Graphics g = result.getGraphics();
 
 		switch (imageIndex) {
 		case CHECK:
-			for (int x = 0, y = 0; x < CELL_SIZE * 30; x += CELL_SIZE) {
+			for (int x = 0, y = 0; x < width; x += spriteWidth) {
 				g.setColor(0xAAAAAA);
-				g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+				g.fillRect(x, y, spriteWidth - 1, spriteHeight - 1);
 				g.setColor(0x808080);
-				g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+				g.drawRect(x, y, spriteWidth - 1, spriteHeight - 1);
 			}
 			break;
 		case GEM:
-			int[] colors = new int[] { 0xFFFF00, 0xFFFFFF, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFF8000, 0x00FF00 };
-			for (int x = 0; x < CELL_SIZE * 30; x += CELL_SIZE) {
-				for (int y = 0; y < CELL_SIZE * 14; y += CELL_SIZE) {
-					g.setColor(colors[y / (CELL_SIZE * 2)]);
-					g.fillArc(x, y, CELL_SIZE, CELL_SIZE, 0, 360);
-					g.setColor(colors[y / (CELL_SIZE * 2)] / 2);
-					g.drawArc(x, y, CELL_SIZE, CELL_SIZE, 0, 360);
+			int[] colors = new int[] { 0xFFFF00, 0xE0E0E0, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFF8000, 0x00FF00 };
+			for (int x = 0; x < width; x += spriteWidth) {
+				for (int y = 0; y < height; y += spriteHeight) {
+					int color = colors[y / spriteHeight];
+					g.setColor(color);
+					g.fillArc(x, y, spriteWidth - 1, spriteHeight - 1, 0, 360);
+					g.setColor(color & 0x808080);
+					g.drawArc(x, y, spriteWidth - 1, spriteHeight - 1, 0, 360);
 				}
 			}
 			break;
 		case TARGET:
-			for (int x = 0, y = 0; x < CELL_SIZE * 6; x += CELL_SIZE) {
+			for (int x = 0, y = 0; x < width; x += spriteWidth) {
 				g.setColor(0xFF0000);
-				g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+				g.drawRect(x, y, spriteWidth - 1, spriteHeight - 1);
 			}
 			break;
+		default:
+			g.setColor(0x000000);
+			g.fillRect(0, 0, width, height);
+			g.setColor(0xFF00FF);
+			for (int x = 0; x < width; x += spriteWidth) {
+				for (int y = 0; y < height; y += spriteHeight) {
+					g.fillRect(x, y, spriteWidth / 2, spriteHeight / 2);
+					g.fillRect(x + spriteWidth / 2, y + spriteHeight / 2, spriteWidth / 2, spriteHeight / 2);
+				}
+			}
 		}
-		return result;
+
+		int[] rgb = new int[width * height];
+		result.getRGB(rgb, 0, width, 0, 0, width, height);
+		for (int i = 0; i < rgb.length; i++) {
+			if (rgb[i] == 0xFFFFFFFF) {
+				rgb[i] = 0x00000000;
+			}
+		}
+
+		return Image.createRGBImage(rgb, width, height, true);
 	}
 
 	protected void paint(Graphics g) {
@@ -108,11 +134,27 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 				Cell cell = field[row][col];
 				int x = OFFSET_X + cell.getX(CELL_SIZE);
 				int y = OFFSET_Y + cell.getY(CELL_SIZE);
-				int spriteRow = cell.getColor() * 2;
+				int bonus = cell.getBonus();
 
-				sprites[GEM].setPosition(x, y);
-				sprites[GEM].setFrame(spriteRow * 15);
-				sprites[GEM].paint(g);
+				switch (bonus) {
+				case Bonus.FLAME:
+					sprites[FLAME].setPosition(x, y);
+					sprites[FLAME].paint(g);
+					break;
+				case Bonus.STAR:
+					sprites[ELECT].setPosition(x, y);
+					sprites[ELECT].paint(g);
+					break;
+				case Bonus.HYPERCUBE:
+					sprites[HYPERCUBE].setPosition(x, y);
+					sprites[HYPERCUBE].paint(g);
+					break;
+				}
+				if (bonus != Bonus.HYPERCUBE) {
+					sprites[GEM].setPosition(x, y);
+					sprites[GEM].setFrame(cell.getFrameIndex());
+					sprites[GEM].paint(g);
+				}
 			}
 		}
 
@@ -120,6 +162,22 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 		int col = ThreeInRow.getSelectedCol();
 		int x = OFFSET_X + col * CELL_SIZE;
 		int y = OFFSET_Y + row * CELL_SIZE;
+
+		sprites[TARGET].setPosition(x, y);
+		sprites[TARGET].paint(g);
+
+		row = ThreeInRow.getNextRow();
+		col = ThreeInRow.getNextCol();
+		x = OFFSET_X + col * CELL_SIZE;
+		y = OFFSET_Y + row * CELL_SIZE;
+
+		sprites[TARGET].setPosition(x, y);
+		sprites[TARGET].paint(g);
+
+		row = ThreeInRow.getCursorRow();
+		col = ThreeInRow.getCursorCol();
+		x = OFFSET_X + col * CELL_SIZE;
+		y = OFFSET_Y + row * CELL_SIZE;
 
 		sprites[TARGET].setPosition(x, y);
 		sprites[TARGET].paint(g);
@@ -140,7 +198,15 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 			}
 		}
 
-		g.drawString("Score: " + ThreeInRow.getScore(), WIDTH / 2, HEIGHT, Graphics.HCENTER | Graphics.BOTTOM);
+		g.drawString("Score: " + ThreeInRow.getScore(), WIDTH / 2, HEIGHT - 30, Graphics.HCENTER | Graphics.BOTTOM);
+	}
+
+	private void update() {
+		// TODO: fix animation speeds
+		sprites[TARGET].nextFrame();
+		sprites[FLAME].nextFrame();
+		sprites[ELECT].nextFrame();
+		sprites[HYPERCUBE].nextFrame();
 	}
 
 	protected void pointerPressed(int x, int y) {
@@ -160,13 +226,38 @@ public class ThreeInRowCanvas extends Canvas implements Runnable {
 	}
 
 	protected void keyPressed(int keyCode) {
-		debug ^= true;
+		int gameAction = getGameAction(keyCode);
+
+		switch (keyCode) {
+		case KEY_NUM2:
+			gameAction = UP;
+			break;
+		case KEY_NUM4:
+			gameAction = LEFT;
+			break;
+		case KEY_NUM6:
+			gameAction = RIGHT;
+			break;
+		case KEY_NUM8:
+			gameAction = DOWN;
+			break;
+		case KEY_NUM5:
+			gameAction = FIRE;
+			break;
+		}
+
+		ThreeInRow.moveCursor(gameAction);
+
+		if (keyCode == Canvas.KEY_STAR) {
+			debug ^= true;
+		}
 	}
 
 	public void run() {
 		while (running) {
 			ThreeInRow.update();
 			repaint();
+			update();
 			try {
 				Thread.sleep(ANIM_DELAY);
 			} catch (InterruptedException e) {
